@@ -2,7 +2,17 @@ from grammar import Grammar
 
 
 g = Grammar()
+fa = g.toFiniteAutomaton()
 
-print("Generated strings:")
-for _ in range(5):
-    print(g.generate_string())
+tests = [
+        ("aca", True),
+        ("acdbca", True),
+        ("acddbca", True),
+        ("ab", False),
+        ("acd", False),
+        ("bca", True)
+    ]
+
+for s, expected in tests:
+    result = fa.string_belongs_to_language(s)
+    print(f"String: {s}, Expected: {expected}, Result: {result}, {'PASS' if result == expected else 'FAIL'}")

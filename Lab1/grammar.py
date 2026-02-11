@@ -1,5 +1,5 @@
 import random
-
+from finite_automaton import FiniteAutomaton
 
 class Grammar:
 
@@ -40,6 +40,30 @@ class Grammar:
         return current
     
 
-    def toFiniteAutomaton():
-        pass
+    def toFiniteAutomaton(self):
+        Q = set(self.VN) 
+        Sigma = set(self.VT)
+        delta = {}
+        F = set()
 
+        for A, productions in self.P.items():
+            for production in productions:
+                if len(production) == 2:
+                    terminal = production[0]
+                    non_terminal = production[1]
+                    if A not in delta:
+                        delta[A] = {}
+                    delta[A][terminal] = non_terminal
+                elif len(production) == 1:
+                    terminal = production
+                    F.add(A)
+                    if A not in delta:
+                        delta[A] = {}
+                    delta[A][terminal] = "ACCEPT"
+
+        Q.add("ACCEPT")
+        delta["ACCEPT"] = {}
+
+        F.add("ACCEPT")
+
+        return FiniteAutomaton(Q, Sigma, delta, self.S, F)

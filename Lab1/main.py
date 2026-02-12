@@ -1,3 +1,5 @@
+import sys
+
 from grammar import Grammar
 
 
@@ -13,6 +15,14 @@ tests = [
         ("bca", True)
     ]
 
+all_passed = True
+
 for s, expected in tests:
     result = fa.string_belongs_to_language(s)
-    print(f"String: {s}, Expected: {expected}, Result: {result}, {'PASS' if result == expected else 'FAIL'}")
+    passed = result == expected
+    if not passed:
+        all_passed = False
+    print(f"String: {s}, Expected: {expected}, Result: {result}, {'PASS' if passed else 'FAIL'}")
+
+if not all_passed:
+    sys.exit(1)

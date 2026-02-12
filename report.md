@@ -11,6 +11,8 @@ A formal language is defined by three main components: an alphabet (a set of all
 
 Finite automata are abstract machines that recognize formal languages by reading an input string symbol by symbol and transitioning between states according to a transition function. A deterministic finite automaton (DFA) is formally defined as a 5-tuple (Q, Σ, δ, q₀, F), where Q is a set of states, Σ is the input alphabet, δ is the transition function, q₀ is the initial state, and F is the set of accepting states. There is a well-known equivalence between regular grammars and finite automata, meaning any regular grammar can be converted into an equivalent DFA.
 
+Regular grammars are important because they describe the simplest class of languages in the Chomsky hierarchy and are practical for designing tokenizers, simple protocol validators, and pattern recognizers. Their restricted production forms guarantee that parsing can be done with finite memory, which is exactly what a finite automaton provides. This tight correspondence makes regular grammars a good starting point for building intuition about how language rules translate into executable recognition logic.
+
 ----
 
 ## Objectives
@@ -21,6 +23,8 @@ Finite automata are abstract machines that recognize formal languages by reading
 * Convert the grammar into an equivalent finite automaton.  
 * Implement a method to check whether a string belongs to the language using the automaton.  
 * Organize the project in a GitHub repository with a structured report.
+* Practice mapping formal definitions to concrete data structures and algorithms.
+* Provide examples that show the generator and validator working together.
 
 ----
 
@@ -29,6 +33,8 @@ Finite automata are abstract machines that recognize formal languages by reading
 ### 1. Grammar Representation
 
 The grammar is implemented as a Python class `Grammar` containing the sets of non-terminals, terminals, the start symbol, and the production rules. These components directly correspond to the formal definition of a grammar G = (Vₙ, Vₜ, P, S). The production rules are stored in a dictionary where each non-terminal maps to a list of its possible right-hand sides.
+
+To keep the implementation simple and readable, non-terminals are represented as single uppercase letters and terminals as lowercase letters. This allows the string generator to scan for non-terminals and replace them in a straightforward way without needing a separate token structure. The rules used in this lab are taken directly from the variant definition, so the class is essentially a faithful encoding of the formal grammar.
 
 ```python
 class Grammar:
@@ -55,6 +61,8 @@ class Grammar:
 
 The `generate_string` method starts from the start symbol and repeatedly replaces one non-terminal with one of its productions until only terminal symbols remain. The replacement is chosen randomly, which allows the generation of different valid strings from the same grammar.
 
+This stochastic approach is useful for quickly checking whether the production rules can produce diverse outputs and for testing the automaton with multiple valid examples. Because the grammar is regular, every replacement either adds one terminal and another non-terminal or ends the derivation with a terminal symbol. The loop stops as soon as no non-terminals remain.
+
 ```python
 def generate_string(self):
     current = self.S
@@ -78,6 +86,8 @@ def generate_string(self):
 ### 3. Conversion from Grammar to Finite Automaton
 
 The `toFiniteAutomaton` method converts the regular grammar into an equivalent deterministic finite automaton. Each non-terminal becomes a state, each terminal becomes part of the input alphabet, and each production rule defines a transition. Productions of the form A → aB create a transition from state A to B on symbol a, while productions of the form A → a lead to a special accepting state "ACCEPT".
+
+This conversion mirrors the standard textbook transformation from a right-linear grammar to a DFA. The extra accepting state makes it possible to represent productions that terminate the derivation. By making that state final and including it in the transition table, the resulting automaton stays deterministic and easy to simulate.
 
 ```python
 def toFiniteAutomaton(self):
@@ -113,6 +123,8 @@ def toFiniteAutomaton(self):
 
 The `FiniteAutomaton` class stores all components of the DFA: states, alphabet, transition function, initial state, and final states. This mirrors the formal definition of a deterministic finite automaton.
 
+The transition function is implemented as a nested dictionary, which provides clear and direct access for each state-symbol pair. This choice keeps the acceptance check efficient and makes it easy to inspect the machine during debugging or printing.
+
 ```python
 class FiniteAutomaton:
     def __init__(self, Q, Sigma, delta, q0, F):
@@ -126,6 +138,8 @@ class FiniteAutomaton:
 ### 5. Checking if a String Belongs to the Language
 
 The `string_belongs_to_language` method simulates the operation of the DFA. It starts from the initial state and follows transitions according to each input symbol. If the automaton ends in an accepting state after reading the entire string, the string is considered valid.
+
+If at any point a transition is missing, the string is immediately rejected, which matches the formal definition of a DFA. This explicit check also makes errors easy to spot when testing with invalid inputs.
 
 ```python
 def string_belongs_to_language(self, input_string):
@@ -147,6 +161,8 @@ def string_belongs_to_language(self, input_string):
 In this laboratory work, a regular grammar corresponding to Variant 9 was successfully implemented in Python. A method was created to generate valid strings from the grammar, demonstrating how derivations work in practice. The grammar was then converted into an equivalent finite automaton using a systematic transformation based on theoretical principles.
 
 The implemented finite automaton correctly accepts all valid strings generated by the grammar and rejects invalid ones, which was verified through testing. This confirms the equivalence between regular grammars and finite automata and demonstrates a practical application of formal language theory.
+
+Overall, the lab bridges formal definitions and working code. The generator provides concrete samples of the language, while the automaton validates them in a deterministic way. This dual perspective helps illustrate how syntactic rules become executable recognition procedures and prepares the project structure for later labs where more complex language classes are studied.
 
 ----
 

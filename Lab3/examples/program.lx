@@ -1,0 +1,5 @@
+# Demo input for the scientific expression lexer
+let radius = 3.5;
+let angle = 1.57079632679;
+let value = sin(angle) + cos(0) - tan(.78539816339);
+print value + radius^2;

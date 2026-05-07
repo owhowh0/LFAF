@@ -1,0 +1,20 @@
+Variant 9
+1. Eliminate ε productions.
+2. Eliminate any renaming.
+3. Eliminate inaccessible symbols.
+4. Eliminate the non productive symbols.
+5. Obtain the Chomsky Normal Form.
+G=(VN, VT, P, S) VN={S, A, B, C, D} VT={a, b}
+P={
+1. S -> bA
+2. S -> BC
+3. A -> a
+4. A -> aS
+5. A -> bAaAb
+6. B -> A
+7. B -> bS
+8. B -> aAa
+9. C -> ε
+10. C -> AB
+11. D -> AB
+}

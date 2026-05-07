@@ -1,58 +1,29 @@
-# Topic: Chomsky Normal Form
+# Topic: Chomsky Normal Form (Lab 5)
 
 ### Course: Formal Languages & Finite Automata
-### Author: Soimu Ionut 
+### Author: Ilie Covali
+### Variant: 9
 
 ----
 
-## Theory
-Chomsky Normal Form (CNF) is a simplified mathematical structure applied to Context-Free Grammars (CFG), playing a crucial role in automata theory and parsing algorithms. In CNF, all production rules are strictly restricted to one of two forms: either a non-terminal produces exactly two non-terminals ($A \rightarrow BC$), or a non-terminal produces exactly one terminal ($A \rightarrow a$). 
+This report explains the theoretical background for Chomsky Normal Form and describes how the Lab5 implementation transforms a context-free grammar into CNF. Chomsky Normal Form requires that every production be either a single terminal on the right-hand side or exactly two non-terminals. This constraint is convenient for parsing algorithms such as CYK because it yields binary parse trees and simplifies dynamic programming reasoning.
 
-This strict binarization format ensures grammatical trees are completely binary. Normalizing CFGs into CNF gives computer scientists robust foundations for polynomial-time parsing algorithms such as the CYK (Cocke-Younger-Kasami) algorithm. Transforming a generic grammar into Chomsky Normal Form requires proceeding logically through specific elimination steps to prevent changing the language recognized while shedding ambiguous structural features like empty string productions or singular variable-to-variable chains.
+The first theoretical step in the conversion process is the elimination of epsilon-productions. A non-terminal is nullable if it can derive the empty string. The implementation locates all nullable non-terminals and, for each original production, generates the variants that result from optionally removing nullable symbols from the right-hand side. Explicit epsilon productions are then removed so that the grammar no longer directly produces the empty string, except when handled separately as a special case.
 
-## Objectives:
+The second theoretical step is the elimination of unit productions, which are productions where a non-terminal produces a single non-terminal. Eliminating unit productions preserves the language by replacing chains of renamings with the eventual non-unit productions of the chain targets. The implementation computes the transitive closure of renaming relations and copies non-unit productions from target variables into origin variables, removing the need for intermediate renamings.
 
-1. Learn about Chomsky Normal Form (CNF).
-2. Get familiar with the approaches of normalizing a grammar.
-3. Implement a method for normalizing an input grammar by the rules of CNF.
-    - The implementation needs to be encapsulated in a method with an appropriate signature.
-    - The implemented functionality needs executed and tested.
-    - Accept any grammar, not only the one from the student's variant (Bonus point).
+The third theoretical step removes useless symbols. Inaccessible symbols are symbols that cannot be reached from the start symbol; they are found by traversing productions outward from the start symbol and removed. Non-productive symbols are those that cannot derive a terminal string; the implementation marks productive symbols iteratively and removes variables and productions that never lead to terminals.
 
-## Implementation description
+After the grammar has been pruned, the conversion to CNF proceeds by removing terminals from mixed right-hand sides and by binarizing long right-hand sides. Each terminal that appears inside a right-hand side of length greater than one is replaced by a fresh non-terminal that produces that terminal. Then any production whose right-hand side contains more than two non-terminals is decomposed into a sequence of binary productions by introducing fresh intermediate variables. The fresh variables are named deterministically by the program as `X1`, `X2`, and so on.
 
-The assignment revolves around a standard Context-Free Grammar initialized programmatically. The solution encapsulates the 5 major sequential steps of CNF transformation in individual methods housed in the `Grammar` class. The `to_chomsky_normal_form` function acts as the orchestrator running the exact pipeline necessary to ensure correct resolution.
+The code is organized around the `Grammar` class in `Grammar.py`. The constructor accepts the sets `VN`, `VT`, the productions `P`, and the start symbol `S`. The method `to_chomsky_normal_form()` orchestrates the conversion and calls the following methods in sequence: `eliminate_epsilon_productions()`, `eliminate_renaming()`, `eliminate_inaccessible_symbols()`, `eliminate_non_productive_symbols()`, and `obtain_chomsky_normal_form()`. Each method implements one of the theoretical steps described above and updates the grammar state stored in the instance.
 
-### 1. Eliminating $\epsilon$-productions
-Empty string productions ($\epsilon$) are completely outlawed in strict CNF implementations unless defining the starting state explicitly. My implementation scans the entire set of rules to detect which variables are "nullable" (can potentially generate an empty sequence). Afterward, it iterates over all combinations removing occurrences inside right-hand production sides logically:
-```python
-nullable_indices = [i for i, char in enumerate(prod) if char in nullable]
-for r in range(len(nullable_indices) + 1):
-    for combo in itertools.combinations(nullable_indices, r):
-        new_prod = "".join([char for i, char in enumerate(prod) if i not in combo])
-        if new_prod:
-            new_P[nt].add(new_prod)
-```
+The `eliminate_epsilon_productions()` method computes the nullable set and generates additional productions by omitting nullable symbols where appropriate. The `eliminate_renaming()` method computes unit pairs and copies non-unit productions across them. The `eliminate_inaccessible_symbols()` method performs a reachability traversal from `S`, and `eliminate_non_productive_symbols()` identifies and removes variables that cannot produce terminals. The `obtain_chomsky_normal_form()` method replaces terminals in mixed contexts with fresh variables and breaks down longer productions into binary rules using newly generated intermediate variables.
 
-### 2. Eliminating Unit Productions
-Unit productions—also known as renamings ($A \rightarrow B$)—serve no purpose other than useless indirection. My script finds direct pairs looping over all possibilities transitively until resolution stagnates. The inner rules of `B` are subsequently copied into the table of `A`, eliminating the necessity to bounce states.
+The driver `main.py` constructs the specific grammar for Variant 9, instantiates `Grammar`, prints the original grammar, runs `to_chomsky_normal_form()`, and prints intermediate and final grammars so the transformation is observable. To reproduce the process, run `python main.py` from the `Lab5` directory; the program prints the grammar before and after each major transformation step and finally prints the grammar in CNF form.
 
-### 3. Eliminating Inaccessible & Non-Productive Symbols
-Useless symbols clutter generation and are fundamentally dead logic variables. 
-- The algorithm filters **inaccessible symbols** by beginning solely from the `S` (start state) traversing outwards dynamically via right-hand usages. Anything disjointed structurally gets truncated simultaneously.
-- **Non-Productive symbols** are scanned looking for variables that successfully resolve strictly to terminal letters ultimately. Using backward evaluation, it maps which abstract letters resolve to real components over iterations. Variables failing to terminate are completely removed.
+The implementation assumes single-character terminals and non-terminals for the input grammar and uses deterministic naming for generated variables. The resulting grammar is guaranteed to contain only productions of the form `A -> a` or `A -> BC` after the conversion, and the printed output can be inspected to verify correctness. If desired, the report can be extended with a concrete example trace showing how a specific original production is transformed step by step into CNF.
 
-### 4. Binarizing to Chomsky Normal Form
-The final algorithm iterates over existing production sets replacing out-of-order bounds with dynamically generated `X{N}` variables.
-It specifically maps singular terminals embedded inside sequences into their own variables immediately. Following that, it dynamically folds rules yielding three or more characters through new intermediate dummy variables until all right-hand targets possess explicitly $2$ symbols max:
-```python
-for i in range(len(prod) - 2):
-    new_var = self.generate_new_var()
-    final_P[curr_nt].add(f"{prod[i]}{new_var}")
-    curr_nt = new_var
-final_P[curr_nt].add(f"{prod[-2]}{prod[-1]}")
-```
+----
 
-## Conclusions / Results
-
-Through this laboratory work, I implemented a robust, modular Normalization engine capable of accepting theoretically varied strings of complex Context-Free Grammars (the bonus request) and stripping their unnecessary rules safely. Following sequential structural requirements, the final execution of my script effectively parsed variant 21 mathematically precisely into binary segments ready to be deployed logically for CYK algorithms and tree constructions while logging sequentially readable tables outlining internal adjustments accurately at each step.
+End of report.
